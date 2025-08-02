@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .warning { background: #fff3cd; color: #856404; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .log {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+        }
+        .iframe-container {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Network Test</h1>
+        
+        <div id="status" class="status info">Testing network connectivity...</div>
+        
+        <div class="test-section">
+            <h3>Network Connectivity Tests</h3>
+            <button onclick="testNicePayDomain()">Test NicePay Domain</button>
+            <button onclick="testLocalServer()">Test Local Server</button>
+            <button onclick="testSDKScript()">Test SDK Script</button>
+            <button onclick="testIframe()">Test iFrame</button>
+            <button onclick="runAllTests()">Run All Tests</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test Results</h3>
+            <div id="results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>iFrame Test</h3>
+            <div class="iframe-container">
+                <iframe id="testIframe" src="about:blank"></iframe>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Console Logs</h3>
+            <div id="console" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        let logCount = 0;
+        
+        // Custom console log
+        function log(message, type = 'info') {
+            const consoleDiv = document.getElementById('console');
+            const timestamp = new Date().toLocaleTimeString();
+            logCount++;
+            consoleDiv.innerHTML += `[${logCount}] [${timestamp}] ${message}\n`;
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        // Update status
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+        
+        // Update results
+        function updateResults(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML += `<div class="status ${type}">${message}</div>`;
+        }
+        
+        // Test NicePay domain
+        async function testNicePayDomain() {
+            log('🌐 Testing NicePay domain connectivity...');
+            updateResults('Testing NicePay domain...', 'info');
+            
+            try {
+                // Test 1: Basic fetch
+                const response = await fetch('https://pay.nicepay.co.kr/v1/js/', {
+                    method: 'HEAD',
+                    mode: 'no-cors'
+                });
+                log('✅ NicePay domain accessible (HEAD request)');
+                updateResults('✅ NicePay domain accessible (HEAD request)', 'success');
+                
+                // Test 2: Try to load script
+                const script = document.createElement('script');
+                script.src = 'https://pay.nicepay.co.kr/v1/js/';
+                script.onload = () => {
+                    log('✅ NicePay SDK script loaded successfully');
+                    updateResults('✅ NicePay SDK script loaded successfully', 'success');
+                };
+                script.onerror = (error) => {
+                    log(`❌ NicePay SDK script failed to load: ${error}`);
+                    updateResults('❌ NicePay SDK script failed to load', 'error');
+                };
+                document.head.appendChild(script);
+                
+            } catch (error) {
+                log(`❌ NicePay domain error: ${error.message}`);
+                updateResults(`❌ NicePay domain error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test local server
+        async function testLocalServer() {
+            log('🏠 Testing local server...');
+            updateResults('Testing local server...', 'info');
+            
+            try {
+                const response = await fetch('/api/config');
+                const config = await response.json();
+                log('✅ Local server accessible');
+                log(`🔑 Client Key: ${config.clientKey}`);
+                updateResults('✅ Local server accessible', 'success');
+                updateResults(`🔑 Client Key: ${config.clientKey}`, 'info');
+            } catch (error) {
+                log(`❌ Local server error: ${error.message}`);
+                updateResults(`❌ Local server error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test SDK script loading
+        function testSDKScript() {
+            log('📜 Testing SDK script loading...');
+            updateResults('Testing SDK script loading...', 'info');
+            
+            // Remove existing script if any
+            const existingScript = document.querySelector('script[src*="nicepay"]');
+            if (existingScript) {
+                existingScript.remove();
+            }
+            
+            // Create new script
+            const script = document.createElement('script');
+            script.src = 'https://pay.nicepay.co.kr/v1/js/';
+            
+            script.onload = () => {
+                log('✅ SDK script loaded');
+                updateResults('✅ SDK script loaded', 'success');
+                
+                // Check if AUTHNICE is available
+                setTimeout(() => {
+                    if (typeof AUTHNICE !== 'undefined') {
+                        log('✅ AUTHNICE object available');
+                        updateResults('✅ AUTHNICE object available', 'success');
+                    } else {
+                        log('❌ AUTHNICE object not available');
+                        updateResults('❌ AUTHNICE object not available', 'error');
+                    }
+                }, 2000);
+            };
+            
+            script.onerror = (error) => {
+                log(`❌ SDK script failed to load: ${error}`);
+                updateResults('❌ SDK script failed to load', 'error');
+            };
+            
+            document.head.appendChild(script);
+        }
+        
+        // Test iframe
+        function testIframe() {
+            log('🖼️ Testing iFrame...');
+            updateResults('Testing iFrame...', 'info');
+            
+            const iframe = document.getElementById('testIframe');
+            iframe.src = 'https://pay.nicepay.co.kr/v1/js/';
+            
+            iframe.onload = () => {
+                log('✅ iFrame loaded successfully');
+                updateResults('✅ iFrame loaded successfully', 'success');
+            };
+            
+            iframe.onerror = (error) => {
+                log(`❌ iFrame failed to load: ${error}`);
+                updateResults('❌ iFrame failed to load', 'error');
+            };
+        }
+        
+        // Run all tests
+        async function runAllTests() {
+            log('🚀 Running all network tests...');
+            updateStatus('Running all tests...', 'info');
+            
+            // Clear previous results
+            document.getElementById('results').innerHTML = '';
+            
+            // Run tests sequentially
+            await testNicePayDomain();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testLocalServer();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            testSDKScript();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            testIframe();
+            
+            updateStatus('All tests completed!', 'success');
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 Network test page loaded');
+            updateStatus('Ready to test network connectivity', 'info');
+        });
+        
+        // Monitor for script loading errors
+        window.addEventListener('error', function(e) {
+            if (e.target.src && e.target.src.includes('nicepay')) {
+                log(`❌ Script loading error: ${e.message}`, 'error');
+            }
+        });
+    </script>
+</body>
+</html> 

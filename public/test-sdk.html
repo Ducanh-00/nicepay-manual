@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NicePay SDK Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 NicePay SDK Test</h1>
+        
+        <div id="status" class="status info">Checking NicePay SDK...</div>
+        
+        <h3>Test Results:</h3>
+        <div id="results"></div>
+        
+        <h3>Actions:</h3>
+        <button onclick="testSDK()">Test SDK Loading</button>
+        <button onclick="testPayment()" id="testPaymentBtn" disabled>Test Payment Request</button>
+        <button onclick="location.reload()">Refresh Page</button>
+        
+        <h3>Console Logs:</h3>
+        <div id="console" style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;"></div>
+    </div>
+
+    <!-- NicePay SDK -->
+    <script src="https://pay.nicepay.co.kr/v1/js/"></script>
+    
+    <script>
+        let sdkLoaded = false;
+        
+        // Custom console log
+        function log(message, type = 'info') {
+            const consoleDiv = document.getElementById('console');
+            const timestamp = new Date().toLocaleTimeString();
+            consoleDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        // Check SDK loading
+        function checkSDK() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            
+            if (typeof AUTHNICE !== 'undefined') {
+                sdkLoaded = true;
+                statusDiv.className = 'status success';
+                statusDiv.textContent = '✅ NicePay SDK loaded successfully!';
+                
+                resultsDiv.innerHTML = `
+                    <div class="status success">✅ AUTHNICE object: ${typeof AUTHNICE}</div>
+                    <div class="status success">✅ requestPay method: ${typeof AUTHNICE.requestPay}</div>
+                `;
+                
+                document.getElementById('testPaymentBtn').disabled = false;
+                log('✅ NicePay SDK loaded successfully');
+            } else {
+                sdkLoaded = false;
+                statusDiv.className = 'status error';
+                statusDiv.textContent = '❌ NicePay SDK not loaded';
+                
+                resultsDiv.innerHTML = `
+                    <div class="status error">❌ AUTHNICE object: undefined</div>
+                    <div class="status error">❌ requestPay method: not available</div>
+                `;
+                
+                document.getElementById('testPaymentBtn').disabled = true;
+                log('❌ NicePay SDK not loaded');
+            }
+        }
+        
+        // Test SDK loading
+        function testSDK() {
+            log('🔍 Testing NicePay SDK...');
+            checkSDK();
+        }
+        
+        // Test payment request
+        function testPayment() {
+            if (!sdkLoaded) {
+                log('❌ SDK not loaded, cannot test payment');
+                return;
+            }
+            
+            log('🚀 Testing payment request...');
+            
+            try {
+                AUTHNICE.requestPay({
+                    clientId: 'S2_TEST_CLIENT_KEY',
+                    method: 'card',
+                    orderId: 'TEST_' + Date.now(),
+                    amount: 1000,
+                    goodsName: 'SDK Test Product',
+                    returnUrl: window.location.origin + '/payment/callback',
+                    fnError: function(result) {
+                        log(`❌ Payment Error: ${result.errorMsg}`);
+                    }
+                });
+                log('✅ Payment request sent successfully');
+            } catch (error) {
+                log(`❌ Payment request failed: ${error.message}`);
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 Page loaded, checking NicePay SDK...');
+            
+            // Check immediately
+            checkSDK();
+            
+            // Check again after 2 seconds
+            setTimeout(() => {
+                log('⏰ Checking SDK again after 2 seconds...');
+                checkSDK();
+            }, 2000);
+            
+            // Check again after 5 seconds
+            setTimeout(() => {
+                log('⏰ Final SDK check after 5 seconds...');
+                checkSDK();
+            }, 5000);
+        });
+        
+        // Monitor for SDK loading
+        let checkCount = 0;
+        const maxChecks = 10;
+        const checkInterval = setInterval(() => {
+            checkCount++;
+            if (typeof AUTHNICE !== 'undefined') {
+                log('✅ SDK detected during monitoring');
+                checkSDK();
+                clearInterval(checkInterval);
+            } else if (checkCount >= maxChecks) {
+                log('⏰ Stopping SDK monitoring after 10 checks');
+                clearInterval(checkInterval);
+            }
+        }, 1000);
+    </script>
+</body>
+</html> 
