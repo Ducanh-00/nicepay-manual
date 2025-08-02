@@ -181,6 +181,70 @@ app.get('/api/config', (req, res) => {
     });
 });
 
+// Direct payment redirect (alternative method)
+app.get('/payment/redirect', async (req, res) => {
+    try {
+        const { method = 'naverpayCard', amount = 1000, goodsName = 'Test Product' } = req.query;
+        
+        // Generate order ID
+        const orderId = `REDIRECT_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+        const returnUrl = `${req.protocol}://${req.get('host')}/payment/callback`;
+        
+        console.log('🚀 Direct payment redirect:', { method, amount, goodsName, orderId });
+        
+        // Create form data
+        const formData = new URLSearchParams();
+        formData.append('clientId', NICEPAY_CONFIG.clientKey);
+        formData.append('method', method);
+        formData.append('orderId', orderId);
+        formData.append('amount', amount);
+        formData.append('goodsName', goodsName);
+        formData.append('returnUrl', returnUrl);
+        
+        // Send HTML form that auto-submits
+        const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Redirecting to NicePay...</title>
+            <style>
+                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            </style>
+        </head>
+        <body>
+            <h2>🔄 Redirecting to NicePay...</h2>
+            <div class="spinner"></div>
+            <p>Please wait while we redirect you to the payment page.</p>
+            
+            <form id="paymentForm" method="POST" action="${NICEPAY_CONFIG.paymentDomain}/payment">
+                <input type="hidden" name="clientId" value="${NICEPAY_CONFIG.clientKey}">
+                <input type="hidden" name="method" value="${method}">
+                <input type="hidden" name="orderId" value="${orderId}">
+                <input type="hidden" name="amount" value="${amount}">
+                <input type="hidden" name="goodsName" value="${goodsName}">
+                <input type="hidden" name="returnUrl" value="${returnUrl}">
+            </form>
+            
+            <script>
+                // Auto-submit form after 2 seconds
+                setTimeout(() => {
+                    document.getElementById('paymentForm').submit();
+                }, 2000);
+            </script>
+        </body>
+        </html>
+        `;
+        
+        res.send(html);
+        
+    } catch (error) {
+        console.error('❌ Payment redirect error:', error);
+        res.status(500).send('Payment redirect failed');
+    }
+});
+
 // Start server
 app.listen(PORT, () => {
     console.log(`🚀 NicePay Test Server running on http://localhost:${PORT}`);

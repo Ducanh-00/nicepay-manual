@@ -91,6 +91,13 @@
             border: 1px solid #dee2e6;
             margin-top: 20px;
         }
+        .alternative-methods {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #ffeaa7;
+        }
     </style>
 </head>
 <body>
@@ -116,6 +123,7 @@
                 <input type="text" id="naverOrderId" value="NAVER_TEST_001">
             </div>
             <button class="naver-btn" onclick="testNaverPay()">Test Naver Pay</button>
+            <button onclick="testNaverPayForm()">Test with Form</button>
         </div>
         
         <!-- Kakao Pay Section -->
@@ -134,6 +142,14 @@
                 <input type="text" id="kakaoOrderId" value="KAKAO_TEST_001">
             </div>
             <button class="kakao-btn" onclick="testKakaoPay()">Test Kakao Pay</button>
+            <button onclick="testKakaoPayForm()">Test with Form</button>
+        </div>
+        
+        <!-- Alternative Methods -->
+        <div class="alternative-methods">
+            <h4>🔄 Alternative Methods (if SDK fails)</h4>
+            <button onclick="testWithRedirect()">Test with Redirect</button>
+            <button onclick="testWithDirectForm()">Test Direct Form</button>
         </div>
         
         <!-- Console Logs -->
@@ -146,6 +162,8 @@
     
     <script>
         let logCount = 0;
+        let paymentInProgress = false;
+        let paymentTimeout = null;
         
         // Custom console log
         function log(message, type = 'info') {
@@ -164,14 +182,37 @@
             statusDiv.className = `status ${type}`;
         }
         
-        // Test Naver Pay
+        // Start payment timeout
+        function startPaymentTimeout() {
+            paymentInProgress = true;
+            paymentTimeout = setTimeout(() => {
+                if (paymentInProgress) {
+                    log('⏰ Payment timeout - redirecting back', 'warning');
+                    updateStatus('Payment timeout - please try again', 'error');
+                    paymentInProgress = false;
+                    window.location.href = '/easy-payment';
+                }
+            }, 300000); // 5 minutes
+        }
+        
+        // Stop payment timeout
+        function stopPaymentTimeout() {
+            paymentInProgress = false;
+            if (paymentTimeout) {
+                clearTimeout(paymentTimeout);
+                paymentTimeout = null;
+            }
+        }
+        
+        // Test Naver Pay with SDK
         async function testNaverPay() {
             const amount = document.getElementById('naverAmount').value;
             const product = document.getElementById('naverProduct').value;
             const orderId = document.getElementById('naverOrderId').value;
             
-            log('🟢 Testing Naver Pay...');
+            log('🟢 Testing Naver Pay with SDK...');
             updateStatus('Testing Naver Pay...', 'info');
+            startPaymentTimeout();
             
             try {
                 const configResponse = await fetch('/api/config');
@@ -186,6 +227,7 @@
                         goodsName: product,
                         returnUrl: window.location.origin + '/payment/callback',
                         fnError: function(result) {
+                            stopPaymentTimeout();
                             log(`❌ Naver Pay Error: ${result.errorMsg}`, 'error');
                             updateStatus('Naver Pay failed', 'error');
                         }
@@ -193,23 +235,28 @@
                     log('✅ Naver Pay request sent successfully');
                     updateStatus('Naver Pay request sent', 'success');
                 } else {
+                    stopPaymentTimeout();
                     log('❌ NicePay SDK not loaded', 'error');
-                    updateStatus('SDK not loaded', 'error');
+                    updateStatus('SDK not loaded - trying alternative method', 'error');
+                    testNaverPayForm();
                 }
             } catch (error) {
+                stopPaymentTimeout();
                 log(`❌ Naver Pay request failed: ${error.message}`, 'error');
-                updateStatus('Naver Pay request failed', 'error');
+                updateStatus('Naver Pay request failed - trying alternative', 'error');
+                testNaverPayForm();
             }
         }
         
-        // Test Kakao Pay
+        // Test Kakao Pay with SDK
         async function testKakaoPay() {
             const amount = document.getElementById('kakaoAmount').value;
             const product = document.getElementById('kakaoProduct').value;
             const orderId = document.getElementById('kakaoOrderId').value;
             
-            log('🟡 Testing Kakao Pay...');
+            log('🟡 Testing Kakao Pay with SDK...');
             updateStatus('Testing Kakao Pay...', 'info');
+            startPaymentTimeout();
             
             try {
                 const configResponse = await fetch('/api/config');
@@ -224,6 +271,7 @@
                         goodsName: product,
                         returnUrl: window.location.origin + '/payment/callback',
                         fnError: function(result) {
+                            stopPaymentTimeout();
                             log(`❌ Kakao Pay Error: ${result.errorMsg}`, 'error');
                             updateStatus('Kakao Pay failed', 'error');
                         }
@@ -231,13 +279,151 @@
                     log('✅ Kakao Pay request sent successfully');
                     updateStatus('Kakao Pay request sent', 'success');
                 } else {
+                    stopPaymentTimeout();
                     log('❌ NicePay SDK not loaded', 'error');
-                    updateStatus('SDK not loaded', 'error');
+                    updateStatus('SDK not loaded - trying alternative method', 'error');
+                    testKakaoPayForm();
                 }
             } catch (error) {
+                stopPaymentTimeout();
                 log(`❌ Kakao Pay request failed: ${error.message}`, 'error');
-                updateStatus('Kakao Pay request failed', 'error');
+                updateStatus('Kakao Pay request failed - trying alternative', 'error');
+                testKakaoPayForm();
             }
+        }
+        
+        // Test Naver Pay with Form
+        async function testNaverPayForm() {
+            log('📝 Testing Naver Pay with form submission...');
+            updateStatus('Testing Naver Pay with form...', 'info');
+            
+            try {
+                const configResponse = await fetch('/api/config');
+                const config = await configResponse.json();
+                
+                const orderId = 'NAVER_FORM_' + Date.now();
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'https://pay.nicepay.co.kr/payment';
+                form.target = '_blank';
+                
+                const fields = {
+                    clientId: config.clientKey,
+                    method: 'naverpayCard',
+                    orderId: orderId,
+                    amount: document.getElementById('naverAmount').value,
+                    goodsName: document.getElementById('naverProduct').value,
+                    returnUrl: window.location.origin + '/payment/callback'
+                };
+                
+                for (const [key, value] of Object.entries(fields)) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = value;
+                    form.appendChild(input);
+                }
+                
+                document.body.appendChild(form);
+                form.submit();
+                document.body.removeChild(form);
+                
+                log('✅ Form submitted to NicePay');
+                updateStatus('Form submitted', 'success');
+            } catch (error) {
+                log(`❌ Form submission failed: ${error.message}`, 'error');
+                updateStatus('Form submission failed', 'error');
+            }
+        }
+        
+        // Test Kakao Pay with Form
+        async function testKakaoPayForm() {
+            log('📝 Testing Kakao Pay with form submission...');
+            updateStatus('Testing Kakao Pay with form...', 'info');
+            
+            try {
+                const configResponse = await fetch('/api/config');
+                const config = await configResponse.json();
+                
+                const orderId = 'KAKAO_FORM_' + Date.now();
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'https://pay.nicepay.co.kr/payment';
+                form.target = '_blank';
+                
+                const fields = {
+                    clientId: config.clientKey,
+                    method: 'kakaopay',
+                    orderId: orderId,
+                    amount: document.getElementById('kakaoAmount').value,
+                    goodsName: document.getElementById('kakaoProduct').value,
+                    returnUrl: window.location.origin + '/payment/callback'
+                };
+                
+                for (const [key, value] of Object.entries(fields)) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = value;
+                    form.appendChild(input);
+                }
+                
+                document.body.appendChild(form);
+                form.submit();
+                document.body.removeChild(form);
+                
+                log('✅ Form submitted to NicePay');
+                updateStatus('Form submitted', 'success');
+            } catch (error) {
+                log(`❌ Form submission failed: ${error.message}`, 'error');
+                updateStatus('Form submission failed', 'error');
+            }
+        }
+        
+        // Test with redirect
+        function testWithRedirect() {
+            log('🔄 Testing with redirect...');
+            updateStatus('Testing with redirect...', 'info');
+            
+            const params = new URLSearchParams({
+                method: 'naverpayCard',
+                amount: '1000',
+                goodsName: 'Redirect Test Product'
+            });
+            
+            window.location.href = `/payment/redirect?${params.toString()}`;
+        }
+        
+        // Test direct form
+        function testWithDirectForm() {
+            log('📝 Testing direct form...');
+            updateStatus('Testing direct form...', 'info');
+            
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'https://pay.nicepay.co.kr/payment';
+            form.target = '_blank';
+            
+            const fields = {
+                clientId: 'S2_f207a0ab16f443fd935056b5a5fac562',
+                method: 'naverpayCard',
+                orderId: 'DIRECT_' + Date.now(),
+                amount: '1000',
+                goodsName: 'Direct Test Product',
+                returnUrl: window.location.origin + '/payment/callback'
+            };
+            
+            for (const [key, value] of Object.entries(fields)) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value;
+                form.appendChild(input);
+            }
+            
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
         }
         
         // Initialize
@@ -255,11 +441,20 @@
                     updateStatus('SDK loaded - Ready to test', 'success');
                     clearInterval(checkInterval);
                 } else if (checkCount >= maxChecks) {
-                    log('⏰ SDK loading timeout', 'warning');
-                    updateStatus('SDK loading timeout - Some features may not work', 'warning');
+                    log('⏰ SDK loading timeout - will use alternative methods', 'warning');
+                    updateStatus('SDK loading timeout - alternative methods available', 'warning');
                     clearInterval(checkInterval);
                 }
             }, 1000);
+        });
+        
+        // Handle global errors
+        window.addEventListener('error', function(e) {
+            if (e.message.includes('Object') || e.message.includes('Unexpected identifier')) {
+                log('❌ NicePay SDK parsing error - trying alternative method', 'error');
+                stopPaymentTimeout();
+                updateStatus('SDK error - trying alternative method', 'error');
+            }
         });
     </script>
 </body>
