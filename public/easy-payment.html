@@ -27,23 +27,17 @@
         }
         .payment-method.naver {
             border-color: #03c75a;
-            background: linear-gradient(135deg, #03c75a 0%, #02a94f 100%);
+            background: #03c75a;
             color: white;
         }
         .payment-method.kakao {
             border-color: #fee500;
-            background: linear-gradient(135deg, #fee500 0%, #fdd835 100%);
+            background: #fee500;
             color: #3c1e1e;
         }
         .payment-method h3 {
             margin: 0 0 15px 0;
             font-size: 1.5em;
-        }
-        .payment-method.naver h3::before {
-            content: "🟢 ";
-        }
-        .payment-method.kakao h3::before {
-            content: "🟡 ";
         }
         .form-group {
             margin: 15px 0;
@@ -53,7 +47,7 @@
             margin-bottom: 5px;
             font-weight: bold;
         }
-        input, select {
+        input {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
@@ -69,23 +63,13 @@
             cursor: pointer;
             font-size: 16px;
             margin: 5px;
-            transition: background 0.3s;
-        }
-        button:hover {
-            background: #0056b3;
         }
         button.naver-btn {
             background: #03c75a;
         }
-        button.naver-btn:hover {
-            background: #02a94f;
-        }
         button.kakao-btn {
             background: #fee500;
             color: #3c1e1e;
-        }
-        button.kakao-btn:hover {
-            background: #fdd835;
         }
         .status {
             padding: 15px;
@@ -107,16 +91,6 @@
             border: 1px solid #dee2e6;
             margin-top: 20px;
         }
-        .quick-test {
-            background: #e3f2fd;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 20px 0;
-        }
-        .quick-test h4 {
-            margin: 0 0 10px 0;
-            color: #1976d2;
-        }
     </style>
 </head>
 <body>
@@ -128,7 +102,7 @@
         
         <!-- Naver Pay Section -->
         <div class="payment-method naver">
-            <h3>Naver Pay</h3>
+            <h3>🟢 Naver Pay</h3>
             <div class="form-group">
                 <label for="naverAmount">Amount (KRW):</label>
                 <input type="number" id="naverAmount" value="1000" min="100" step="100">
@@ -141,13 +115,12 @@
                 <label for="naverOrderId">Order ID:</label>
                 <input type="text" id="naverOrderId" value="NAVER_TEST_001">
             </div>
-            <button class="naver-btn" onclick="testNaverPay()">🟢 Test Naver Pay</button>
-            <button onclick="quickTestNaverPay()">Quick Test (₩1,000)</button>
+            <button class="naver-btn" onclick="testNaverPay()">Test Naver Pay</button>
         </div>
         
         <!-- Kakao Pay Section -->
         <div class="payment-method kakao">
-            <h3>Kakao Pay</h3>
+            <h3>🟡 Kakao Pay</h3>
             <div class="form-group">
                 <label for="kakaoAmount">Amount (KRW):</label>
                 <input type="number" id="kakaoAmount" value="1000" min="100" step="100">
@@ -160,17 +133,7 @@
                 <label for="kakaoOrderId">Order ID:</label>
                 <input type="text" id="kakaoOrderId" value="KAKAO_TEST_001">
             </div>
-            <button class="kakao-btn" onclick="testKakaoPay()">🟡 Test Kakao Pay</button>
-            <button onclick="quickTestKakaoPay()">Quick Test (₩1,000)</button>
-        </div>
-        
-        <!-- Quick Test Section -->
-        <div class="quick-test">
-            <h4>🚀 Quick Test Options</h4>
-            <button onclick="testAllEasyPayments()">Test All Easy Payments</button>
-            <button onclick="testWithSDK()">Test with SDK</button>
-            <button onclick="testWithForm()">Test with Form</button>
-            <button onclick="testWithRedirect()">Test with Redirect</button>
+            <button class="kakao-btn" onclick="testKakaoPay()">Test Kakao Pay</button>
         </div>
         
         <!-- Console Logs -->
@@ -211,7 +174,6 @@
             updateStatus('Testing Naver Pay...', 'info');
             
             try {
-                // Get client key from server
                 const configResponse = await fetch('/api/config');
                 const config = await configResponse.json();
                 
@@ -250,7 +212,6 @@
             updateStatus('Testing Kakao Pay...', 'info');
             
             try {
-                // Get client key from server
                 const configResponse = await fetch('/api/config');
                 const config = await configResponse.json();
                 
@@ -279,105 +240,6 @@
             }
         }
         
-        // Quick test functions
-        function quickTestNaverPay() {
-            document.getElementById('naverAmount').value = '1000';
-            document.getElementById('naverProduct').value = 'Quick Naver Test';
-            document.getElementById('naverOrderId').value = 'NAVER_QUICK_' + Date.now();
-            testNaverPay();
-        }
-        
-        function quickTestKakaoPay() {
-            document.getElementById('kakaoAmount').value = '1000';
-            document.getElementById('kakaoProduct').value = 'Quick Kakao Test';
-            document.getElementById('kakaoOrderId').value = 'KAKAO_QUICK_' + Date.now();
-            testKakaoPay();
-        }
-        
-        // Test all easy payments
-        function testAllEasyPayments() {
-            log('🚀 Testing all easy payments...');
-            updateStatus('Testing all easy payments...', 'info');
-            
-            setTimeout(() => quickTestNaverPay(), 1000);
-            setTimeout(() => quickTestKakaoPay(), 3000);
-        }
-        
-        // Test with SDK
-        function testWithSDK() {
-            log('🔧 Testing with SDK method...');
-            updateStatus('Testing with SDK...', 'info');
-            
-            if (typeof AUTHNICE !== 'undefined') {
-                log('✅ SDK available, testing Naver Pay...');
-                quickTestNaverPay();
-            } else {
-                log('❌ SDK not available', 'error');
-                updateStatus('SDK not available', 'error');
-            }
-        }
-        
-        // Test with form submission
-        async function testWithForm() {
-            log('📝 Testing with form submission...');
-            updateStatus('Testing with form...', 'info');
-            
-            try {
-                // Get client key from server
-                const configResponse = await fetch('/api/config');
-                const config = await configResponse.json();
-                
-                const orderId = 'FORM_TEST_' + Date.now();
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = 'https://pay.nicepay.co.kr/v1/payment';
-                form.target = '_blank';
-                
-                const fields = {
-                    clientId: config.clientKey,
-                    method: 'naverpayCard',
-                    orderId: orderId,
-                    amount: '1000',
-                    goodsName: 'Form Test Product',
-                    returnUrl: window.location.origin + '/payment/callback'
-                };
-                
-                for (const [key, value] of Object.entries(fields)) {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = key;
-                    input.value = value;
-                    form.appendChild(input);
-                }
-                
-                document.body.appendChild(form);
-                form.submit();
-                document.body.removeChild(form);
-                
-                log('✅ Form submitted to NicePay');
-                updateStatus('Form submitted', 'success');
-            } catch (error) {
-                log(`❌ Form submission failed: ${error.message}`, 'error');
-                updateStatus('Form submission failed', 'error');
-            }
-        }
-        
-        // Test with redirect
-        function testWithRedirect() {
-            log('🔄 Testing with redirect...');
-            updateStatus('Testing with redirect...', 'info');
-            
-            const orderId = 'REDIRECT_TEST_' + Date.now();
-            const params = new URLSearchParams({
-                method: 'naverpayCard',
-                amount: '1000',
-                goodsName: 'Redirect Test Product',
-                orderId: orderId
-            });
-            
-            window.location.href = `/payment/redirect?${params.toString()}`;
-        }
-        
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             log('🚀 Easy Payment test page loaded');
@@ -398,13 +260,6 @@
                     clearInterval(checkInterval);
                 }
             }, 1000);
-        });
-        
-        // Monitor for script loading errors
-        window.addEventListener('error', function(e) {
-            if (e.target.src && e.target.src.includes('nicepay')) {
-                log(`❌ Script loading error: ${e.message}`, 'error');
-            }
         });
     </script>
 </body>
