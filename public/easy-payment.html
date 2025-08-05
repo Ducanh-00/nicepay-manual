@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,12 +13,14 @@
             padding: 20px;
             background: #f5f5f5;
         }
+
         .container {
             background: white;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
         .payment-method {
             margin: 20px 0;
             padding: 20px;
@@ -25,28 +28,34 @@
             border-radius: 10px;
             background: #f8f9fa;
         }
+
         .payment-method.naver {
             border-color: #03c75a;
             background: #03c75a;
             color: white;
         }
+
         .payment-method.kakao {
             border-color: #fee500;
             background: #fee500;
             color: #3c1e1e;
         }
+
         .payment-method h3 {
             margin: 0 0 15px 0;
             font-size: 1.5em;
         }
+
         .form-group {
             margin: 15px 0;
         }
+
         label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
         }
+
         input {
             width: 100%;
             padding: 10px;
@@ -54,6 +63,7 @@
             border-radius: 5px;
             font-size: 16px;
         }
+
         button {
             background: #007bff;
             color: white;
@@ -64,22 +74,38 @@
             font-size: 16px;
             margin: 5px;
         }
+
         button.naver-btn {
             background: #03c75a;
         }
+
         button.kakao-btn {
             background: #fee500;
             color: #3c1e1e;
         }
+
         .status {
             padding: 15px;
             margin: 15px 0;
             border-radius: 5px;
             font-weight: bold;
         }
-        .success { background: #d4edda; color: #155724; }
-        .error { background: #f8d7da; color: #721c24; }
-        .info { background: #d1ecf1; color: #0c5460; }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
         .log {
             background: #f8f9fa;
             padding: 10px;
@@ -91,6 +117,7 @@
             border: 1px solid #dee2e6;
             margin-top: 20px;
         }
+
         .alternative-methods {
             background: #fff3cd;
             padding: 15px;
@@ -100,13 +127,14 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>💳 Easy Payment Test</h1>
         <p>Test Naver Pay and Kakao Pay with NicePay integration</p>
-        
+
         <div id="status" class="status info">Ready to test easy payments...</div>
-        
+
         <!-- Naver Pay Section -->
         <div class="payment-method naver">
             <h3>🟢 Naver Pay</h3>
@@ -125,7 +153,7 @@
             <button class="naver-btn" onclick="testNaverPay()">Test Naver Pay</button>
             <button onclick="testNaverPayForm()">Test with Form</button>
         </div>
-        
+
         <!-- Kakao Pay Section -->
         <div class="payment-method kakao">
             <h3>🟡 Kakao Pay</h3>
@@ -144,14 +172,14 @@
             <button class="kakao-btn" onclick="testKakaoPay()">Test Kakao Pay</button>
             <button onclick="testKakaoPayForm()">Test with Form</button>
         </div>
-        
+
         <!-- Alternative Methods -->
         <div class="alternative-methods">
             <h4>🔄 Alternative Methods (if SDK fails)</h4>
             <button onclick="testWithRedirect()">Test with Redirect</button>
             <button onclick="testWithDirectForm()">Test Direct Form</button>
         </div>
-        
+
         <!-- Console Logs -->
         <h3>Console Logs:</h3>
         <div id="console" class="log"></div>
@@ -159,12 +187,12 @@
 
     <!-- NicePay SDK -->
     <script src="https://pay.nicepay.co.kr/v1/js/"></script>
-    
+
     <script>
         let logCount = 0;
         let paymentInProgress = false;
         let paymentTimeout = null;
-        
+
         // Custom console log
         function log(message, type = 'info') {
             const consoleDiv = document.getElementById('console');
@@ -174,14 +202,14 @@
             consoleDiv.scrollTop = consoleDiv.scrollHeight;
             console.log(message);
         }
-        
+
         // Update status
         function updateStatus(message, type = 'info') {
             const statusDiv = document.getElementById('status');
             statusDiv.textContent = message;
             statusDiv.className = `status ${type}`;
         }
-        
+
         // Start payment timeout
         function startPaymentTimeout() {
             paymentInProgress = true;
@@ -194,7 +222,7 @@
                 }
             }, 300000); // 5 minutes
         }
-        
+
         // Stop payment timeout
         function stopPaymentTimeout() {
             paymentInProgress = false;
@@ -203,21 +231,21 @@
                 paymentTimeout = null;
             }
         }
-        
+
         // Test Naver Pay with SDK
         async function testNaverPay() {
             const amount = document.getElementById('naverAmount').value;
             const product = document.getElementById('naverProduct').value;
             const orderId = document.getElementById('naverOrderId').value;
-            
+
             log('🟢 Testing Naver Pay with SDK...');
             updateStatus('Testing Naver Pay...', 'info');
             startPaymentTimeout();
-            
+
             try {
                 const configResponse = await fetch('/api/config');
                 const config = await configResponse.json();
-                
+
                 if (typeof AUTHNICE !== 'undefined') {
                     AUTHNICE.requestPay({
                         clientId: config.clientKey,
@@ -226,7 +254,7 @@
                         amount: parseInt(amount),
                         goodsName: product,
                         returnUrl: window.location.origin + '/payment/callback',
-                        fnError: function(result) {
+                        fnError: function (result) {
                             stopPaymentTimeout();
                             log(`❌ Naver Pay Error: ${result.errorMsg}`, 'error');
                             updateStatus('Naver Pay failed', 'error');
@@ -247,21 +275,21 @@
                 testNaverPayForm();
             }
         }
-        
+
         // Test Kakao Pay with SDK
         async function testKakaoPay() {
             const amount = document.getElementById('kakaoAmount').value;
             const product = document.getElementById('kakaoProduct').value;
             const orderId = document.getElementById('kakaoOrderId').value;
-            
+
             log('🟡 Testing Kakao Pay with SDK...');
             updateStatus('Testing Kakao Pay...', 'info');
             startPaymentTimeout();
-            
+
             try {
                 const configResponse = await fetch('/api/config');
                 const config = await configResponse.json();
-                
+
                 if (typeof AUTHNICE !== 'undefined') {
                     AUTHNICE.requestPay({
                         clientId: config.clientKey,
@@ -270,7 +298,7 @@
                         amount: parseInt(amount),
                         goodsName: product,
                         returnUrl: window.location.origin + '/payment/callback',
-                        fnError: function(result) {
+                        fnError: function (result) {
                             stopPaymentTimeout();
                             log(`❌ Kakao Pay Error: ${result.errorMsg}`, 'error');
                             updateStatus('Kakao Pay failed', 'error');
@@ -291,22 +319,22 @@
                 testKakaoPayForm();
             }
         }
-        
+
         // Test Naver Pay with Form
         async function testNaverPayForm() {
             log('📝 Testing Naver Pay with form submission...');
             updateStatus('Testing Naver Pay with form...', 'info');
-            
+
             try {
                 const configResponse = await fetch('/api/config');
                 const config = await configResponse.json();
-                
+
                 const orderId = 'NAVER_FORM_' + Date.now();
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = 'https://pay.nicepay.co.kr/payment';
                 form.target = '_blank';
-                
+
                 const fields = {
                     clientId: config.clientKey,
                     method: 'naverpayCard',
@@ -315,7 +343,7 @@
                     goodsName: document.getElementById('naverProduct').value,
                     returnUrl: window.location.origin + '/payment/callback'
                 };
-                
+
                 for (const [key, value] of Object.entries(fields)) {
                     const input = document.createElement('input');
                     input.type = 'hidden';
@@ -323,11 +351,11 @@
                     input.value = value;
                     form.appendChild(input);
                 }
-                
+
                 document.body.appendChild(form);
                 form.submit();
                 document.body.removeChild(form);
-                
+
                 log('✅ Form submitted to NicePay');
                 updateStatus('Form submitted', 'success');
             } catch (error) {
@@ -335,22 +363,22 @@
                 updateStatus('Form submission failed', 'error');
             }
         }
-        
+
         // Test Kakao Pay with Form
         async function testKakaoPayForm() {
             log('📝 Testing Kakao Pay with form submission...');
             updateStatus('Testing Kakao Pay with form...', 'info');
-            
+
             try {
                 const configResponse = await fetch('/api/config');
                 const config = await configResponse.json();
-                
+
                 const orderId = 'KAKAO_FORM_' + Date.now();
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = 'https://pay.nicepay.co.kr/payment';
                 form.target = '_blank';
-                
+
                 const fields = {
                     clientId: config.clientKey,
                     method: 'kakaopay',
@@ -359,7 +387,7 @@
                     goodsName: document.getElementById('kakaoProduct').value,
                     returnUrl: window.location.origin + '/payment/callback'
                 };
-                
+
                 for (const [key, value] of Object.entries(fields)) {
                     const input = document.createElement('input');
                     input.type = 'hidden';
@@ -367,11 +395,11 @@
                     input.value = value;
                     form.appendChild(input);
                 }
-                
+
                 document.body.appendChild(form);
                 form.submit();
                 document.body.removeChild(form);
-                
+
                 log('✅ Form submitted to NicePay');
                 updateStatus('Form submitted', 'success');
             } catch (error) {
@@ -379,31 +407,30 @@
                 updateStatus('Form submission failed', 'error');
             }
         }
-        
+
         // Test with redirect
         function testWithRedirect() {
             log('🔄 Testing with redirect...');
             updateStatus('Testing with redirect...', 'info');
-            
+
             const params = new URLSearchParams({
                 method: 'naverpayCard',
                 amount: '1000',
                 goodsName: 'Redirect Test Product'
             });
-            
             window.location.href = `/payment/redirect?${params.toString()}`;
         }
-        
+
         // Test direct form
         function testWithDirectForm() {
             log('📝 Testing direct form...');
             updateStatus('Testing direct form...', 'info');
-            
+
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = 'https://pay.nicepay.co.kr/payment';
             form.target = '_blank';
-            
+
             const fields = {
                 clientId: 'S2_f207a0ab16f443fd935056b5a5fac562',
                 method: 'naverpayCard',
@@ -412,7 +439,7 @@
                 goodsName: 'Direct Test Product',
                 returnUrl: window.location.origin + '/payment/callback'
             };
-            
+
             for (const [key, value] of Object.entries(fields)) {
                 const input = document.createElement('input');
                 input.type = 'hidden';
@@ -420,17 +447,17 @@
                 input.value = value;
                 form.appendChild(input);
             }
-            
+
             document.body.appendChild(form);
             form.submit();
             document.body.removeChild(form);
         }
-        
+
         // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             log('🚀 Easy Payment test page loaded');
             updateStatus('Ready to test easy payments', 'info');
-            
+
             // Check SDK loading
             let checkCount = 0;
             const maxChecks = 10;
@@ -447,9 +474,9 @@
                 }
             }, 1000);
         });
-        
+
         // Handle global errors
-        window.addEventListener('error', function(e) {
+        window.addEventListener('error', function (e) {
             if (e.message.includes('Object') || e.message.includes('Unexpected identifier')) {
                 log('❌ NicePay SDK parsing error - trying alternative method', 'error');
                 stopPaymentTimeout();
@@ -458,4 +485,5 @@
         });
     </script>
 </body>
-</html> 
+
+</html>

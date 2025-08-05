@@ -1,6 +1,38 @@
-# 🧪 NicePay Test Application
+# 🧪 Payment Integration Test Application
 
-Ứng dụng test thanh toán NicePay với sandbox environment.
+Ứng dụng test thanh toán tích hợp NicePay và Toss Payment với sandbox environment.
+
+## 🚀 Quick Start
+
+### 1. Cài đặt dependencies
+```bash
+npm install
+```
+
+### 2. Cấu hình environment
+Tạo file `.env` từ `env.example`:
+```bash
+cp env.example .env
+```
+
+Cập nhật thông tin trong file `.env`:
+```env
+# NicePay Sandbox Configuration
+NICEPAY_CLIENT_KEY=S2_YOUR_SANDBOX_CLIENT_KEY
+NICEPAY_SECRET_KEY=YOUR_SANDBOX_SECRET_KEY
+
+# Toss Payment Configuration
+TOSS_CLIENT_KEY=test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq
+TOSS_SECRET_KEY=test_sk_D4yKeq5bgrpKRd0JYbLVGX0lzW6Y
+
+# Server Configuration
+PORT=3000
+NODE_ENV=development
+
+# Payment Configuration
+PAYMENT_DOMAIN=https://sandbox-pay.nicepay.co.kr
+API_DOMAIN=https://sandbox-api.nicepay.co.kr
+```
 
 ## 🚀 Quick Start
 
@@ -46,15 +78,28 @@ npm start
 ```
 
 ### 5. Truy cập ứng dụng
-Mở trình duyệt và truy cập: `http://localhost:3000`
+Mở trình duyệt và truy cập các trang:
+
+- **NicePay Test**: `http://localhost:3000`
+- **NicePay Easy Payment**: `http://localhost:3000/easy-payment`
+- **Toss Payment**: `http://localhost:3000/toss-payment`
+- **Toss Payment Demo**: `http://localhost:3000/toss-demo`
 
 ## 📋 Features
 
-### ✅ Payment Methods
+### ✅ NicePay Payment Methods
 - 💳 Credit Card
 - 🏦 Bank Transfer  
 - 📝 Virtual Account
 - 📱 Mobile Payment
+
+### ✅ Toss Payment Methods
+- 💳 Credit/Debit Cards (Visa, MasterCard, JCB)
+- 💛 KakaoPay
+- 💚 NaverPay
+- 💙 TossPay
+- 🏦 Bank Transfers
+- 📱 Mobile Payments
 
 ### ✅ Test Features
 - Sandbox environment
@@ -65,11 +110,22 @@ Mở trình duyệt và truy cập: `http://localhost:3000`
 - Beautiful UI
 
 ### ✅ API Endpoints
+
+#### NicePay
 - `GET /` - Main payment page
 - `POST /payment/callback` - Payment callback handler
 - `GET /payment/status/:tid` - Check payment status
 - `POST /payment/cancel/:tid` - Cancel payment
 - `GET /api/config` - Get configuration
+
+#### Toss Payment
+- `GET /toss-payment` - Toss payment page
+- `GET /toss-demo` - Toss payment demo
+- `GET /toss/success` - Success callback
+- `GET /toss/fail` - Fail callback
+- `GET /api/toss/config` - Get Toss configuration
+- `GET /api/toss/payment/:paymentKey` - Check payment status
+- `POST /api/toss/payment/:paymentKey/cancel` - Cancel payment
 
 ## 🔧 Configuration
 

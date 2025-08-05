@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toss Payment Integration</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .payment-method {
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .payment-method:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .payment-method.selected {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .payment-method img {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 8px;
+        }
+
+        .payment-method span {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px;
+            width: 100%;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .amount-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .amount-display .amount {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .amount-display .currency {
+            font-size: 16px;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💳 Toss Payment</h1>
+            <p>Chọn phương thức thanh toán của bạn</p>
+        </div>
+
+        <div class="content">
+            <div class="amount-display">
+                <div class="amount" id="displayAmount">₩1,000</div>
+                <div class="currency">KRW</div>
+            </div>
+
+            <div class="form-group">
+                <label>Phương thức thanh toán</label>
+                <div class="payment-methods">
+                    <div class="payment-method" data-method="card" onclick="selectPaymentMethod('card')">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iIzY2N0VlQSIvPgo8cGF0aCBkPSJNMTIgMTVIMjgiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CjxwYXRoIGQ9Ik0xMiAyMEgyNCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPHJlY3QgeD0iMTIiIHk9IjI1IiB3aWR0aD0iNCIgaGVpZ2h0PSI0IiByeD0iMiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+" alt="Card">
+                        <span>Thẻ tín dụng</span>
+                    </div>
+                    <div class="payment-method" data-method="kakao" onclick="selectPaymentMethod('kakao')">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iI0ZGRDcwMCIvPgo8cGF0aCBkPSJNMTIgMTVIMjgiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CjxwYXRoIGQ9Ik0xMiAyMEgyNCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPHJlY3QgeD0iMTIiIHk9IjI1IiB3aWR0aD0iNCIgaGVpZ2h0PSI0IiByeD0iMiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+" alt="Kakao">
+                        <span>KakaoPay</span>
+                    </div>
+                    <div class="payment-method" data-method="naver" onclick="selectPaymentMethod('naver')">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iIzAzQzM2MyIvPgo8cGF0aCBkPSJNMTIgMTVIMjgiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CjxwYXRoIGQ9Ik0xMiAyMEgyNCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPHJlY3QgeD0iMTIiIHk9IjI1IiB3aWR0aD0iNCIgaGVpZ2h0PSI0IiByeD0iMiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+" alt="Naver">
+                        <span>NaverPay</span>
+                    </div>
+                    <div class="payment-method" data-method="toss" onclick="selectPaymentMethod('toss')">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iIzAwNjZGRiIvPgo8cGF0aCBkPSJNMTIgMTVIMjgiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CjxwYXRoIGQ9Ik0xMiAyMEgyNCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPHJlY3QgeD0iMTIiIHk9IjI1IiB3aWR0aD0iNCIgcng9IjIiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg==" alt="Toss">
+                        <span>TossPay</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Số tiền (KRW)</label>
+                <input type="number" id="amount" value="1000" min="100" onchange="updateAmount()">
+            </div>
+
+            <div class="form-group">
+                <label>Tên sản phẩm</label>
+                <input type="text" id="goodsName" value="Test Product">
+            </div>
+
+            <div class="form-group">
+                <label>Mã đơn hàng</label>
+                <input type="text" id="orderId" readonly>
+            </div>
+
+            <button class="btn" id="payButton" onclick="requestPayment()" disabled>
+                <span id="buttonText">💳 Thanh toán</span>
+            </button>
+
+            <div id="status" class="status" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Toss Payments SDK -->
+    <script src="https://js.tosspayments.com/v1/payment"></script>
+    
+    <script>
+        let selectedMethod = null;
+        let tossPayments = null;
+
+        // Initialize Toss Payments
+        function initializeTossPayments() {
+            try {
+                tossPayments = TossPayments('test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq');
+                showStatus('✅ Toss Payments SDK đã sẵn sàng!', 'success');
+                document.getElementById('payButton').disabled = false;
+            } catch (error) {
+                showStatus('❌ Không thể khởi tạo Toss Payments SDK', 'error');
+            }
+        }
+
+        // Select payment method
+        function selectPaymentMethod(method) {
+            selectedMethod = method;
+            
+            // Remove selected class from all methods
+            document.querySelectorAll('.payment-method').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            // Add selected class to chosen method
+            document.querySelector(`[data-method="${method}"]`).classList.add('selected');
+            
+            // Update button text
+            const buttonText = document.getElementById('buttonText');
+            switch(method) {
+                case 'card':
+                    buttonText.textContent = '💳 Thanh toán bằng thẻ';
+                    break;
+                case 'kakao':
+                    buttonText.textContent = '💛 Thanh toán bằng KakaoPay';
+                    break;
+                case 'naver':
+                    buttonText.textContent = '💚 Thanh toán bằng NaverPay';
+                    break;
+                case 'toss':
+                    buttonText.textContent = '💙 Thanh toán bằng TossPay';
+                    break;
+            }
+        }
+
+        // Update amount display
+        function updateAmount() {
+            const amount = document.getElementById('amount').value;
+            document.getElementById('displayAmount').textContent = `₩${parseInt(amount).toLocaleString()}`;
+        }
+
+        // Generate order ID
+        function generateOrderId() {
+            const timestamp = Date.now();
+            const random = Math.random().toString(36).substring(2, 8);
+            document.getElementById('orderId').value = `TOSS_${timestamp}_${random}`;
+        }
+
+        // Show status message
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+        }
+
+        // Request payment
+        async function requestPayment() {
+            if (!selectedMethod) {
+                showStatus('⚠️ Vui lòng chọn phương thức thanh toán', 'error');
+                return;
+            }
+
+            if (!tossPayments) {
+                showStatus('❌ Toss Payments SDK chưa sẵn sàng', 'error');
+                return;
+            }
+
+            const amount = parseInt(document.getElementById('amount').value);
+            const goodsName = document.getElementById('goodsName').value;
+            const orderId = document.getElementById('orderId').value;
+
+            if (amount < 100) {
+                showStatus('⚠️ Số tiền tối thiểu là 100 KRW', 'error');
+                return;
+            }
+
+            // Disable button and show loading
+            const button = document.getElementById('payButton');
+            const buttonText = document.getElementById('buttonText');
+            button.disabled = true;
+            buttonText.innerHTML = '<span class="loading"></span>Đang xử lý...';
+
+            try {
+                // Get payment method code
+                let methodCode;
+                switch(selectedMethod) {
+                    case 'card':
+                        methodCode = 'card';
+                        break;
+                    case 'kakao':
+                        methodCode = 'kakao';
+                        break;
+                    case 'naver':
+                        methodCode = 'naver';
+                        break;
+                    case 'toss':
+                        methodCode = 'toss';
+                        break;
+                    default:
+                        methodCode = 'card';
+                }
+
+                // Request payment
+                await tossPayments.requestPayment(methodCode, {
+                    amount: amount,
+                    orderId: orderId,
+                    orderName: goodsName,
+                    customerName: 'Test Customer',
+                    customerEmail: 'test@example.com',
+                    successUrl: window.location.origin + '/toss/success',
+                    failUrl: window.location.origin + '/toss/fail',
+                });
+
+                showStatus('✅ Yêu cầu thanh toán đã được gửi!', 'success');
+
+            } catch (error) {
+                console.error('Payment error:', error);
+                showStatus(`❌ Lỗi thanh toán: ${error.message}`, 'error');
+                
+                // Re-enable button
+                button.disabled = false;
+                buttonText.textContent = '💳 Thanh toán';
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            generateOrderId();
+            updateAmount();
+            showStatus('⏳ Đang khởi tạo Toss Payments...', 'info');
+            
+            // Initialize Toss Payments after a short delay
+            setTimeout(initializeTossPayments, 1000);
+        });
+    </script>
+</body>
+</html> 
